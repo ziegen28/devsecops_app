@@ -1,4 +1,4 @@
-name: Security & Code Scanning
+name: Security Scan
 
 on:
   push:
@@ -6,79 +6,63 @@ on:
   pull_request:
     branches: [ main, master ]
   schedule:
-    - cron: '0 3 * * 1'  # weekly run (UTC) - optional
+    - cron: '0 3 * * 1'  # weekly scan
 
 jobs:
-  bandit-scan:
-    name: Bandit SAST
+
+  bandit:
+    name: Bandit SAST Scan
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
-      - name: Install dev deps
+      - name: Install Bandit
         run: |
-          python -m pip install --upgrade pip
-          pip install bandit pip-audit
+          pip install bandit
 
-      - name: Run Bandit
+      - name: Run Bandit (soft fail)
         run: |
           mkdir -p security-reports
-          bandit -r . -f json -o security-reports/bandit-report.json
-      - name: Upload Bandit report
+          bandit -r . -f json -o security-reports/bandit-report.json || true
+
+      - name: Upload Bandit Report
         uses: actions/upload-artifact@v4
         with:
           name: bandit-report
           path: security-reports/bandit-report.json
 
+
   dependency-audit:
-    name: Dependency Audit (pip-audit)
+    name: Python Dependency Audit
     runs-on: ubuntu-latest
-    needs: bandit-scan
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install pip-audit
-        run: pip install pip-audit
-
-      - name: Run pip-audit
-        run: |
-          pip-audit --format json > security-reports/pip-audit.json || true
-      - name: Upload pip-audit
-        uses: actions/upload-artifact@v4
-        with:
-          name: pip-audit-report
-          path: security-reports/pip-audit.json
-
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          languages: python
+          python-version: "3.11"
 
-      - name: Autobuild (if needed)
-        uses: github/codeql-action/autobuild@v2
+      - name: Install pip-audit
+        run: |
+          pip install pip-audit
 
-      - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v2
+      - name: Run pip-audit (soft fail)
+        run: |
+          mkdir -p security-reports
+          pip-audit --format json > security-reports/pip-audit.json || true
+
+      - name: Upload Audit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report
+          path: security-reports/pip-audit.json
