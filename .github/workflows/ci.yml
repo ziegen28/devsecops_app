@@ -9,12 +9,13 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11" ]   # FIXED
+        python-version: [ "3.10", "3.11" ]
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -27,6 +28,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Tests
+      - name: Lint code
         run: |
-          pytest
+          Flake8 .
+          # Or: flake8 .
+
+      - name: Run tests
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest --cov=./ --cov-report=xml
