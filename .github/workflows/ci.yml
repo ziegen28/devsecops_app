@@ -30,8 +30,8 @@ jobs:
 
       - name: Lint code
         run: |
-          Flake8 .
-          # Or: flake8 .
+         flake8 .
+
 
       - name: Run tests
         env:
