@@ -13,7 +13,6 @@ jobs:
   security-bandit:
     name: Bandit SAST Scan
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -33,11 +32,9 @@ jobs:
           name: bandit-report
           path: security-reports/bandit-report.json
 
-
   security-dep-audit:
     name: Dependency Audit (pip-audit)
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -57,15 +54,12 @@ jobs:
           name: pip-audit-report
           path: security-reports/pip-audit.json
 
-
   python-ci:
     name: Lint, Test, Coverage, Sonar
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         python-version: [ "3.10", "3.11" ]
-
     steps:
       - uses: actions/checkout@v4
 
@@ -86,7 +80,7 @@ jobs:
       - name: Run Tests + Coverage
         run: |
           pytest --cov=./ --cov-report=xml
-          ls -la  # show coverage.xml for debugging
+          ls -la  # verify coverage.xml
 
       - name: Upload Coverage Result
         uses: actions/upload-artifact@v4
@@ -94,11 +88,8 @@ jobs:
           name: coverage-xml
           path: coverage.xml
 
-
-      # ---------- SONARQUBE / SONARCLOUD SCAN ----------
-
-      - name: Sonar Scan
-        uses: SonarSource/sonarqube-scan-action@v2
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -110,7 +101,6 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.tests=.
             -Dsonar.exclusions=**/tests/**
-
 
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1
